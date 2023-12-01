@@ -66,17 +66,13 @@ defmodule D01 do
   @digits_regex2 ~r/(?<digit>(\d))|(?<digit_name>(one)|(two)|(three)|(four)|(five)|(six)|(seven)|(eight)|(nine))/
 
   def to_calibration_value(line) when is_binary(line) do
-    digits =
-      Regex.scan(@digits_regex, line)
-      |> Enum.concat()
-
+    digits = Regex.scan(@digits_regex, line) |> Enum.concat()
     calibration_value = hd(digits) <> List.last(digits)
     String.to_integer(calibration_value)
   end
 
   def p1(input) when is_list(input) do
-    Enum.map(input, &to_calibration_value/1)
-    |> Enum.sum()
+    Enum.map(input, &to_calibration_value/1) |> Enum.sum()
   end
 
   def convert_digit(digit) when is_binary(digit) do
@@ -120,10 +116,7 @@ defmodule D01 do
   end
 
   def to_calibration_value2(line) when is_binary(line) do
-    digits =
-      scan_with_overlaps(@digits_regex2, line)
-      |> Enum.map(&convert_digit/1)
-
+    digits = scan_with_overlaps(@digits_regex2, line) |> Enum.map(&convert_digit/1)
     calibration_value = hd(digits) <> List.last(digits)
     String.to_integer(calibration_value)
   end
@@ -206,4 +199,4 @@ Randomized with seed 647997
 %{total: 2, failures: 0, excluded: 0, skipped: 0}
 ```
 
-<!-- livebook:{"offset":4799,"stamp":{"token":"XCP.YItNpA5kvyldEy8T2dbNuZZhDAS191pXfgJCT230rXxK3e2XD62TzrpOzhpoorzuC9_SGFbAULhk3pzh0aiHKKhmRAasK2MtEawJHg","version":2}} -->
+<!-- livebook:{"offset":4769,"stamp":{"token":"XCP.L6kh0pcIhm0MGG8u6L8HLnRAYDtzv7A4OiMzvN-onXoCOZx5UE4yG9MLUBJKotRZ90580b1iiyu1uivZpcCrwrHhq8PTslxWZu5znA","version":2}} -->
