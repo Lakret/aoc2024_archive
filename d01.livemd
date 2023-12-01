@@ -1,0 +1,209 @@
+<!-- livebook:{"file_entries":[{"file":{"file_system_id":"local","file_system_type":"local","path":"/Users/lakret/mine/aoc2024/inputs/d01"},"name":"d01.bin","type":"file"}],"persist_outputs":true} -->
+
+# AoC 2024, Day 1
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.0"}
+])
+```
+
+## Input & Parsing
+
+```elixir
+input =
+  Kino.FS.file_path("d01.bin")
+  |> File.read!()
+  |> String.split("\n", trim: true)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+["eighttkbtzjz6nineeight", "5knjbxgvhktvfcq89onefive", "hnjcrxeightonejnlvm4hstmcsevensix",
+ "trsdgcxcseven39dpmzs", "oneninesixtwo26", "dppthreeh32twobhrqzks", "1cxklgfbvhsnccfive4",
+ "foursgjsevenseven5five19", "nrrk87", "63ntkjbvcv3ntdcptmvheight78", "7xv3one",
+ "3tzjcrfbvhtqctfmqmdcbjhxln9eightnqbcqztmxcthree", "sevensszlgdrlrhnptonethree3qvrxkbgfxtthree",
+ "3nckzkpkjsvztqkgvm99", "fourthreeonesevencqdv2gnvblhr", "528ksdcbx", "six342",
+ "3twozrfrtljql9eightgcqrgmbzz7dlcr5", "6five2threesevenone65", "4onejrg23sevensxfive",
+ "fourthreecszzvhzfsevensix916", "spqzvdxxjeightninejzbpzone7", "cfivesevensix332lfpcffmld",
+ "ninesevenhrdvmzj24bcxxz6", "khpn3fourvhqmntjxfhsvrlnvc", "bfzxhzftwo2czsrv",
+ "mmblpnnineseven4gtfvqscghfour", "1zjgqlz", "five1ninetjjtfxqpdkgrxtgxrcsevenkfdzlh", "s8twoned",
+ "8fiveone53nineeightthree7", "926xrfcjzvpd7", "3sevenqnzjsqh6fnssjdsbv3nine",
+ "rjbbsevenvzkghzsixsbjchs59", "221fsnxtbstone1", "seven9fourpdseven1four2eight", "two1nine4nine7",
+ "9seven7", "fourcjmdgjsfive2l", "twokvhrdldggn15twoxfivenine",
+ "mmjtldgmvq157hchsnvpbjvrvtvnineeight", "cgzeight3sjmhdcvlnthree5vkgfmx", "8sevenfourgnxdpp62xx5",
+ "jgdk3z7mmkkjkm", "9xrdltttpqznsljbvcdvtz", "62zthreethree6",
+ "sjbxq9ptsvjhpzmxfoureightmdbnlsckfqlqr", "91xrnsbxxsvk6brxfftpttsevencszfhsnrfive",
+ "two9ljdfskpfive", "1seven384", ...]
+```
+
+```elixir
+input |> length()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+1000
+```
+
+## Part 1
+
+```elixir
+example = input |> Enum.at(7)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+"foursgjsevenseven5five19"
+```
+
+```elixir
+defmodule D01 do
+  @digits_regex ~r/\d/
+  @digits_regex2 ~r/(?<digit>(\d))|(?<digit_name>(one)|(two)|(three)|(four)|(five)|(six)|(seven)|(eight)|(nine))/
+
+  def to_calibration_value(line) when is_binary(line) do
+    digits =
+      Regex.scan(@digits_regex, line)
+      |> Enum.concat()
+
+    calibration_value = hd(digits) <> List.last(digits)
+    String.to_integer(calibration_value)
+  end
+
+  def p1(input) when is_list(input) do
+    Enum.map(input, &to_calibration_value/1)
+    |> Enum.sum()
+  end
+
+  def convert_digit(digit) when is_binary(digit) do
+    case digit do
+      "one" -> 1
+      "two" -> 2
+      "three" -> 3
+      "four" -> 4
+      "five" -> 5
+      "six" -> 6
+      "seven" -> 7
+      "eight" -> 8
+      "nine" -> 9
+      _ -> digit
+    end
+    |> to_string()
+  end
+
+  def scan_with_overlaps(regex, line) do
+    scan_with_overlaps(
+      regex,
+      line,
+      Regex.run(regex, line, return: :index, capture: :first),
+      []
+    )
+  end
+
+  def scan_with_overlaps(regex, line, [{idx, len}], matches) do
+    m = String.slice(line, idx, len)
+
+    scan_with_overlaps(
+      regex,
+      line,
+      Regex.run(regex, line, return: :index, capture: :first, offset: idx + 1),
+      [m | matches]
+    )
+  end
+
+  def scan_with_overlaps(_regex, _line, nil, matches) do
+    Enum.reverse(matches)
+  end
+
+  def to_calibration_value2(line) when is_binary(line) do
+    digits =
+      scan_with_overlaps(@digits_regex2, line)
+      |> Enum.map(&convert_digit/1)
+
+    calibration_value = hd(digits) <> List.last(digits)
+    String.to_integer(calibration_value)
+  end
+
+  def p2(input) do
+    Enum.map(input, &to_calibration_value2/1)
+    |> Enum.sum()
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, D01, <<70, 79, 82, 49, 0, 0, 20, ...>>, {:p2, 1}}
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule D01Test do
+  use ExUnit.Case, async: true
+
+  def read_input() do
+    Kino.FS.file_path("d01.bin")
+    |> File.read!()
+    |> String.split("\n", trim: true)
+  end
+
+  test "part 1 works" do
+    res =
+      D01.p1([
+        "1abc2",
+        "pqr3stu8vwx",
+        "a1b2c3d4e5f",
+        "treb7uchet"
+      ])
+
+    assert res == 142
+
+    input = read_input()
+    assert D01.p1(input) == 55130
+  end
+
+  test "part 2 works" do
+    res =
+      D01.p2([
+        "two1nine",
+        "eightwothree",
+        "abcone2threexyz",
+        "xtwone3four",
+        "4nineeightseven2",
+        "zoneight234",
+        "7pqrstsixteen"
+      ])
+
+    assert res == 281
+
+    input = read_input()
+    assert D01.p2(input) == 54985
+  end
+end
+
+ExUnit.run()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+..
+Finished in 0.02 seconds (0.02s async, 0.00s sync)
+2 tests, 0 failures
+
+Randomized with seed 647997
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{total: 2, failures: 0, excluded: 0, skipped: 0}
+```
+
+<!-- livebook:{"offset":4799,"stamp":{"token":"XCP.YItNpA5kvyldEy8T2dbNuZZhDAS191pXfgJCT230rXxK3e2XD62TzrpOzhpoorzuC9_SGFbAULhk3pzh0aiHKKhmRAasK2MtEawJHg","version":2}} -->
