@@ -56,13 +56,11 @@ defmodule D01 do
   end
 
   defp scan_with_overlaps(regex, line, [{idx, len}], matches) do
-    m = String.slice(line, idx, len)
-
     scan_with_overlaps(
       regex,
       line,
       Regex.run(regex, line, return: :index, capture: :first, offset: idx + 1),
-      [m | matches]
+      [String.slice(line, idx, len) | matches]
     )
   end
 
