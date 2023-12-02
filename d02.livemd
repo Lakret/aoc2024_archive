@@ -1,0 +1,635 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# AoC 2024, Day 2
+
+## Section
+
+```elixir
+import IEx.Helpers
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+IEx.Helpers
+```
+
+```elixir
+defmodule Round do
+  defstruct red: 0, green: 0, blue: 0
+
+  def parse(round) when is_binary(round) do
+    String.split(round, ", ")
+    |> Enum.map(fn entry ->
+      [n, color] = String.split(entry)
+      {String.to_existing_atom(color), String.to_integer(n)}
+    end)
+    |> then(fn fields -> struct!(Round, fields) end)
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, Round, <<70, 79, 82, 49, 0, 0, 11, ...>>, {:parse, 1}}
+```
+
+```elixir
+defmodule Game do
+  defstruct [:id, :rounds]
+
+  def parse(game) when is_binary(game) do
+    [id, rounds] = String.split(game, ": ")
+    ["Game", id] = String.split(id)
+    rounds = String.split(rounds, "; ") |> Enum.map(&Round.parse/1)
+    %Game{id: String.to_integer(id), rounds: rounds}
+  end
+
+  @doc """
+  Checks if `game` is possible given a max number of cubes of each color
+  specified in `limit` as a `Round` struct.
+  """
+  def possible?(%__MODULE__{} = game, %Round{} = limit) do
+    Enum.all?(game.rounds, fn round ->
+      round.red <= limit.red && round.green <= limit.green && round.blue <= limit.blue
+    end)
+  end
+
+  @doc """
+  Returns a `Round` struct containing the minimal required number of cubes
+  of each color for `game` to be possible.
+  """
+  def required(%__MODULE__{} = game) do
+    Enum.reduce(game.rounds, %Round{}, fn round, required ->
+      %Round{
+        red: max(round.red, required.red),
+        green: max(round.green, required.green),
+        blue: max(round.blue, required.blue)
+      }
+    end)
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, Game, <<70, 79, 82, 49, 0, 0, 19, ...>>, {:required, 1}}
+```
+
+```elixir
+defmodule D02 do
+  def read_input() do
+    Path.join(__DIR__, "inputs/d02")
+    |> File.read!()
+    |> String.split("\n", trim: true)
+    |> Enum.map(&Game.parse/1)
+  end
+
+  @p1_limit %Round{red: 12, green: 13, blue: 14}
+
+  def p1(games) do
+    games
+    |> Enum.filter(&Game.possible?(&1, @p1_limit))
+    |> Enum.map(fn g -> g.id end)
+    |> Enum.sum()
+  end
+
+  def p2(games) do
+    games
+    |> Enum.map(fn game ->
+      %Round{red: red, green: green, blue: blue} = Game.required(game)
+      red * green * blue
+    end)
+    |> Enum.sum()
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, D02, <<70, 79, 82, 49, 0, 0, 12, ...>>, {:p2, 1}}
+```
+
+```elixir
+games = D02.read_input()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+[
+  %Game{
+    id: 1,
+    rounds: [
+      %Round{red: 2, green: 2, blue: 0},
+      %Round{red: 6, green: 3, blue: 0},
+      %Round{red: 2, green: 1, blue: 2},
+      %Round{red: 1, green: 0, blue: 0}
+    ]
+  },
+  %Game{
+    id: 2,
+    rounds: [
+      %Round{red: 0, green: 2, blue: 0},
+      %Round{red: 15, green: 0, blue: 5},
+      %Round{red: 5, green: 2, blue: 4},
+      %Round{red: 6, green: 3, blue: 6},
+      %Round{red: 0, green: 1, blue: 6}
+    ]
+  },
+  %Game{
+    id: 3,
+    rounds: [
+      %Round{red: 8, green: 5, blue: 10},
+      %Round{red: 3, green: 5, blue: 0},
+      %Round{red: 12, green: 2, blue: 9},
+      %Round{red: 11, green: 6, blue: 0}
+    ]
+  },
+  %Game{
+    id: 4,
+    rounds: [
+      %Round{red: 1, green: 2, blue: 3},
+      %Round{red: 1, green: 17, blue: 1},
+      %Round{red: 5, green: 1, blue: 0}
+    ]
+  },
+  %Game{
+    id: 5,
+    rounds: [
+      %Round{red: 13, green: 4, blue: 3},
+      %Round{red: 5, green: 5, blue: 14},
+      %Round{red: 3, green: 7, blue: 2},
+      %Round{red: 10, green: 5, blue: 11}
+    ]
+  },
+  %Game{
+    id: 6,
+    rounds: [
+      %Round{red: 4, green: 1, blue: 0},
+      %Round{red: 19, green: 5, blue: 1},
+      %Round{red: 15, green: 1, blue: 1},
+      %Round{red: 12, green: 8, blue: 0},
+      %Round{red: 7, green: 19, blue: 0},
+      %Round{red: 14, green: 12, blue: 2}
+    ]
+  },
+  %Game{
+    id: 7,
+    rounds: [
+      %Round{red: 3, green: 3, blue: 1},
+      %Round{red: 0, green: 4, blue: 0},
+      %Round{red: 6, green: 5, blue: 1}
+    ]
+  },
+  %Game{
+    id: 8,
+    rounds: [
+      %Round{red: 0, green: 1, blue: 0},
+      %Round{red: 16, green: 1, blue: 1},
+      %Round{red: 3, green: 1, blue: 1},
+      %Round{red: 0, green: 1, blue: 0},
+      %Round{red: 0, green: 0, blue: 2},
+      %Round{red: 9, green: 0, blue: 0}
+    ]
+  },
+  %Game{
+    id: 9,
+    rounds: [
+      %Round{red: 1, green: 5, blue: 0},
+      %Round{red: 6, green: 1, blue: 4},
+      %Round{red: 7, green: 9, blue: 6},
+      %Round{red: 11, green: 12, blue: 4}
+    ]
+  },
+  %Game{
+    id: 10,
+    rounds: [
+      %Round{red: 7, green: 12, blue: 4},
+      %Round{red: 2, green: 0, blue: 6},
+      %Round{red: 6, green: 7, blue: 6}
+    ]
+  },
+  %Game{
+    id: 11,
+    rounds: [
+      %Round{red: 2, green: 18, blue: 0},
+      %Round{red: 14, green: 19, blue: 9},
+      %Round{red: 12, green: 5, blue: 8},
+      %Round{red: 12, green: 4, blue: 0},
+      %Round{red: 14, green: 7, blue: 10}
+    ]
+  },
+  %Game{
+    id: 12,
+    rounds: [
+      %Round{red: 8, green: 0, blue: 4},
+      %Round{red: 1, green: 4, blue: 2},
+      %Round{red: 12, green: 11, blue: 1}
+    ]
+  },
+  %Game{
+    id: 13,
+    rounds: [
+      %Round{red: 4, green: 5, blue: 4},
+      %Round{red: 4, green: 2, blue: 5},
+      %Round{red: 1, green: 10, blue: 5}
+    ]
+  },
+  %Game{
+    id: 14,
+    rounds: [
+      %Round{red: 14, green: 1, blue: 0},
+      %Round{red: 7, green: 2, blue: 3},
+      %Round{red: 2, green: 0, blue: 4},
+      %Round{red: 8, green: 3, blue: 4},
+      %Round{red: 14, green: 2, blue: 4},
+      %Round{red: 9, green: 3, blue: 6}
+    ]
+  },
+  %Game{
+    id: 15,
+    rounds: [
+      %Round{red: 5, green: 1, blue: 17},
+      %Round{red: 2, green: 1, blue: 0},
+      %Round{red: 3, green: 2, blue: 0},
+      %Round{red: 4, green: 2, blue: 11}
+    ]
+  },
+  %Game{
+    id: 16,
+    rounds: [
+      %Round{red: 5, green: 5, blue: 1},
+      %Round{red: 15, green: 13, blue: 5},
+      %Round{red: 6, green: 12, blue: 3},
+      %Round{red: 13, green: 1, blue: 9},
+      %Round{red: 6, green: 13, blue: 15},
+      %Round{red: 7, green: 5, blue: 3}
+    ]
+  },
+  %Game{
+    id: 17,
+    rounds: [
+      %Round{red: 17, green: 0, blue: 9},
+      %Round{red: 19, green: 2, blue: 9},
+      %Round{red: 18, green: 1, blue: 8},
+      %Round{red: 2, green: 1, blue: 10},
+      %Round{red: 7, green: 1, blue: 5},
+      %Round{red: 2, green: 2, blue: 5}
+    ]
+  },
+  %Game{
+    id: 18,
+    rounds: [
+      %Round{red: 1, green: 9, blue: 1},
+      %Round{red: 0, green: 8, blue: 5},
+      %Round{red: 0, green: 9, blue: 4},
+      %Round{red: 1, green: 6, blue: 0},
+      %Round{red: 1, green: 3, blue: 3},
+      %Round{red: 1, green: 4, blue: 1}
+    ]
+  },
+  %Game{
+    id: 19,
+    rounds: [
+      %Round{red: 3, green: 0, blue: 3},
+      %Round{red: 2, green: 4, blue: 1},
+      %Round{red: 2, green: 4, blue: 0},
+      %Round{red: 1, green: 0, blue: 7}
+    ]
+  },
+  %Game{
+    id: 20,
+    rounds: [
+      %Round{red: 2, green: 6, blue: 1},
+      %Round{red: 4, green: 10, blue: 5},
+      %Round{red: 0, green: 7, blue: 1},
+      %Round{red: 10, green: 3, blue: 1},
+      %Round{red: 11, green: 2, blue: 3},
+      %Round{red: 11, green: 10, blue: 1}
+    ]
+  },
+  %Game{
+    id: 21,
+    rounds: [
+      %Round{red: 8, green: 1, blue: 17},
+      %Round{red: 7, green: 13, blue: 8},
+      %Round{red: 2, green: 10, blue: 7}
+    ]
+  },
+  %Game{
+    id: 22,
+    rounds: [
+      %Round{red: 0, green: 4, blue: 13},
+      %Round{red: 0, green: 10, blue: 13},
+      %Round{red: 3, green: 8, blue: 12},
+      %Round{red: 3, green: 6, blue: 3}
+    ]
+  },
+  %Game{
+    id: 23,
+    rounds: [
+      %Round{red: 7, green: 11, blue: 0},
+      %Round{red: 11, green: 0, blue: 11},
+      %Round{red: 3, green: 12, blue: 0},
+      %Round{red: 7, green: 7, blue: 15},
+      %Round{red: 0, green: 10, blue: 5}
+    ]
+  },
+  %Game{
+    id: 24,
+    rounds: [
+      %Round{red: 6, green: 15, blue: 1},
+      %Round{red: 2, green: 5, blue: 1},
+      %Round{red: 7, green: 13, blue: 1},
+      %Round{red: 0, green: 0, blue: 1},
+      %Round{red: 12, green: 19, blue: 1},
+      %Round{red: 2, green: 13, blue: 1}
+    ]
+  },
+  %Game{
+    id: 25,
+    rounds: [
+      %Round{red: 2, green: 15, blue: 1},
+      %Round{red: 0, green: 9, blue: 5},
+      %Round{red: 4, green: 16, blue: 0},
+      %Round{red: 2, green: 7, blue: 3}
+    ]
+  },
+  %Game{
+    id: 26,
+    rounds: [
+      %Round{red: 1, green: 0, blue: 5},
+      %Round{red: 1, green: 1, blue: 9},
+      %Round{red: 1, green: 1, blue: 4}
+    ]
+  },
+  %Game{
+    id: 27,
+    rounds: [
+      %Round{red: 3, green: 2, blue: 4},
+      %Round{red: 2, green: 0, blue: 3},
+      %Round{red: 1, green: 5, blue: 1}
+    ]
+  },
+  %Game{
+    id: 28,
+    rounds: [
+      %Round{red: 1, green: 3, blue: 6},
+      %Round{red: 5, green: 3, blue: 2},
+      %Round{red: 4, green: 6, blue: 0}
+    ]
+  },
+  %Game{
+    id: 29,
+    rounds: [
+      %Round{red: 6, green: 8, blue: 18},
+      %Round{red: 8, green: 2, blue: 18},
+      %Round{red: 2, green: 2, blue: 14},
+      %Round{red: 2, green: 4, blue: 19},
+      %Round{red: 9, green: 11, blue: 8}
+    ]
+  },
+  %Game{
+    id: 30,
+    rounds: [
+      %Round{red: 9, green: 6, blue: 11},
+      %Round{red: 4, green: 6, blue: 1},
+      %Round{red: 1, green: 1, blue: 13},
+      %Round{red: 7, green: 1, blue: 1}
+    ]
+  },
+  %Game{
+    id: 31,
+    rounds: [
+      %Round{red: 11, green: 3, blue: 0},
+      %Round{red: 2, green: 3, blue: 0},
+      %Round{red: 6, green: 4, blue: 0},
+      %Round{red: 9, green: 0, blue: 4},
+      %Round{red: 2, green: 4, blue: 3},
+      %Round{red: 2, green: 6, blue: 1}
+    ]
+  },
+  %Game{
+    id: 32,
+    rounds: [
+      %Round{red: 4, green: 12, blue: 16},
+      %Round{red: 3, green: 7, blue: 10},
+      %Round{red: 0, green: 4, blue: 7},
+      %Round{red: 3, green: 1, blue: 8}
+    ]
+  },
+  %Game{
+    id: 33,
+    rounds: [
+      %Round{red: 2, green: 6, blue: 2},
+      %Round{red: 1, green: 3, blue: 7},
+      %Round{red: 0, green: 1, blue: 9},
+      %Round{red: 1, green: 1, blue: 10},
+      %Round{red: 4, green: 6, blue: 8},
+      %Round{red: 2, green: 1, blue: 7}
+    ]
+  },
+  %Game{
+    id: 34,
+    rounds: [
+      %Round{red: 6, green: 0, blue: 4},
+      %Round{red: 7, green: 5, blue: 3},
+      %Round{red: 1, green: 0, blue: 2},
+      %Round{red: 0, green: 2, blue: 5}
+    ]
+  },
+  %Game{
+    id: 35,
+    rounds: [
+      %Round{red: 0, green: 8, blue: 1},
+      %Round{red: 0, green: 0, blue: 12},
+      %Round{red: 0, green: 6, blue: 13},
+      %Round{red: 0, green: 4, blue: 9},
+      %Round{red: 1, green: 5, blue: 7},
+      %Round{red: 1, green: 6, blue: 5}
+    ]
+  },
+  %Game{
+    id: 36,
+    rounds: [
+      %Round{red: 10, green: 6, blue: 4},
+      %Round{red: 2, green: 1, blue: 15},
+      %Round{red: 16, green: 2, blue: 14}
+    ]
+  },
+  %Game{
+    id: 37,
+    rounds: [
+      %Round{red: 1, green: 3, blue: 2},
+      %Round{red: 4, green: 2, blue: 5},
+      %Round{red: 2, green: 3, blue: 0},
+      %Round{red: 4, green: 1, blue: 4},
+      %Round{red: 3, green: 3, blue: 4}
+    ]
+  },
+  %Game{
+    id: 38,
+    rounds: [
+      %Round{red: 9, green: 1, blue: 16},
+      %Round{red: 1, green: 1, blue: 4},
+      %Round{red: 1, green: 1, blue: 10},
+      %Round{red: 3, green: 0, blue: 17},
+      %Round{red: 5, green: 0, blue: 7}
+    ]
+  },
+  %Game{
+    id: 39,
+    rounds: [
+      %Round{red: 9, green: 3, blue: 16},
+      %Round{red: 3, green: 8, blue: 3},
+      %Round{red: 13, green: 1, blue: 8},
+      %Round{red: 3, green: 3, blue: 17},
+      %Round{red: 9, green: 3, blue: 11}
+    ]
+  },
+  %Game{
+    id: 40,
+    rounds: [
+      %Round{red: 8, green: 2, blue: 4},
+      %Round{red: 0, green: 0, blue: 3},
+      %Round{red: 0, green: 0, blue: 7}
+    ]
+  },
+  %Game{
+    id: 41,
+    rounds: [
+      %Round{red: 7, green: 10, blue: 3},
+      %Round{red: 0, green: 0, blue: 1},
+      %Round{red: 1, green: 8, blue: 4},
+      %Round{red: 7, green: 8, blue: 4}
+    ]
+  },
+  %Game{
+    id: 42,
+    rounds: [
+      %Round{red: 1, green: 6, blue: 5},
+      %Round{red: 2, green: 6, blue: 5},
+      %Round{red: 3, green: 1, blue: 3},
+      %Round{red: 1, green: 8, ...},
+      %Round{red: 2, ...},
+      %Round{...}
+    ]
+  },
+  %Game{
+    id: 43,
+    rounds: [
+      %Round{red: 9, green: 9, blue: 12},
+      %Round{red: 6, green: 2, blue: 8},
+      %Round{red: 12, green: 1, ...},
+      %Round{red: 13, ...},
+      %Round{...},
+      ...
+    ]
+  },
+  %Game{
+    id: 44,
+    rounds: [
+      %Round{red: 1, green: 4, blue: 16},
+      %Round{red: 0, green: 5, ...},
+      %Round{red: 0, ...},
+      %Round{...},
+      ...
+    ]
+  },
+  %Game{id: 45, rounds: [%Round{red: 9, green: 6, ...}, %Round{red: 5, ...}, %Round{...}, ...]},
+  %Game{id: 46, rounds: [%Round{red: 1, ...}, %Round{...}, ...]},
+  %Game{id: 47, rounds: [%Round{...}, ...]},
+  %Game{id: 48, rounds: [...]},
+  %Game{id: 49, ...},
+  %Game{...},
+  ...
+]
+```
+
+```elixir
+games |> D02.p1()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+2169
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule D01Test do
+  use ExUnit.Case, async: true
+
+  test "parser works" do
+    game = "Game 1: 2 red, 2 green; 6 red, 3 green; 2 red, 1 green, 2 blue; 1 red"
+
+    assert Game.parse(game) == %Game{
+             id: 1,
+             rounds: [
+               %Round{red: 2, green: 2},
+               %Round{red: 6, green: 3},
+               %Round{red: 2, green: 1, blue: 2},
+               %Round{red: 1}
+             ]
+           }
+  end
+
+  test "part 1 works" do
+    games =
+      """
+      Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+      Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+      Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+      Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+      Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+      """
+
+    games = games |> String.split("\n", trim: true) |> Enum.map(&Game.parse/1)
+    assert D02.p1(games) == 8
+
+    games = D02.read_input()
+    assert D02.p1(games) == 2169
+  end
+
+  test "part 2 works" do
+    games =
+      """
+      Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+      Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+      Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+      Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+      Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+      """
+
+    games = games |> String.split("\n", trim: true) |> Enum.map(&Game.parse/1)
+    assert D02.p2(games) == 2286
+
+    games = D02.read_input()
+    assert D02.p2(games) == 60948
+  end
+end
+
+ExUnit.run()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+...
+Finished in 0.02 seconds (0.02s async, 0.00s sync)
+3 tests, 0 failures
+
+Randomized with seed 793685
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{total: 3, failures: 0, excluded: 0, skipped: 0}
+```
