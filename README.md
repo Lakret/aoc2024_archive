@@ -1,2 +1,3 @@
-# aoc2024
-Advent of Code 2024 #aoc #adventofcode
+# Advent of Code 2024
+
+Solutions in Elixir, Rust, Julia, and Python.
